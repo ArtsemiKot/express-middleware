@@ -1,67 +1,81 @@
 const express = require('express');
-const { getAllUsers, getUserByID, createUser, patchUser, updateUser, deleteUserById } = require('../service/user.service')
-const route = express.Router();
+const { Service } = require('../service/user.service')
+const { isValidUserId, isValidUserData } = require('../helper/validation.js');
+const { buildRespons } = require('../helper/buildREspons.js')
 
-route.get('/', (req, res) => {
-    try {
-        const data = getAllUsers();
-        res.status(200).send(data);
-    } catch (error) {
-        res.status(404).send(error.message)
+const service = new Service();
+
+class Controller {
+    constructor() {
+        this.route = express.Router();
+        this.initRoute()
     }
-});
+    initRoute() {
+        this.route.get('/', (req, res) => {
+            try {
+                const data = getAllUsers();
+                buildRespons(res, 200, data);
+            } catch (error) {
+                buildRespons(res, 404, error.message);
+            }
+        });
 
-route.get('/:id', (req, res) => {
-    try {
-        const { id } = req.params;
-        const data = getUserByID(id);
-        res.status(200).send(data);
-    } catch (error) {
-        res.status(404).send(error.message)
+        this.route.get('/:id', isValidUserId, (req, res) => {
+            try {
+                const { id } = req.params;
+                const data = service.getUserByID(id);
+                buildRespons(res, 200, data);
+            } catch (error) {
+                buildRespons(res, 404, error.message);
+            }
+        })
+
+        this.route.post('/', isValidUserData, (req, res) => {
+            try {
+                const { name, surname, email, pwd } = req.body;
+                const data = service.createUser(name, surname, email, pwd);
+                buildRespons(res, 200, data);
+            } catch (error) {
+                buildRespons(res, 404, error.message);
+            }
+        })
+
+        this.route.patch('/:id', isValidUserId, (req, res) => {
+            try {
+                const { id } = req.params;
+                const clientObj = req.body;
+                const data = service.patchUser(id, clientObj);
+                buildRespons(res, 200, data);
+            } catch (error) {
+                buildRespons(res, 404, error.message);
+            }
+        })
+
+        this.route.put('/:id', isValidUserId, isValidUserData, (req, res) => {
+            try {
+                const { id } = req.params;
+                const { name, surname, email, pwd } = req.body;
+                const data = service.updateUser(id, name, surname, email, pwd);
+                buildRespons(res, 200, data);
+            } catch (error) {
+                buildRespons(res, 404, error.message);
+            }
+        })
+
+        this.route.delete('/:id', isValidUserId, (req, res) => {
+            try {
+                const { id } = req.params;
+                const data = service.deleteUserById(id);
+                buildRespons(res, 200, data);
+            } catch (error) {
+                buildRespons(res, 401, error.message);
+
+            }
+
+        })
     }
-})
+}
 
-route.post('/', (req, res) => {
-    try {
-        const { name, surname, email, pwd } = req.body;
-        const data = createUser(name, surname, email, pwd);
-        res.status(200).send(data);
-    } catch (error) {
-        res.status(404).send(error.message);
-    }
-})
 
-route.patch('/:id', (req, res) => {
-    try {
-        const { id } = req.params;
-        const clientObj = req.body;
-        const data = patchUser(id, clientObj);
-        res.status(200).send(data);
-    } catch (error) {
-        res.status(404).send(error.message);
-    }
-})
 
-route.put('/:id', (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, surname, email, pwd } = req.body;
-        const data = updateUser(id, name, surname, email, pwd);
-        res.status(200).send(data);
-    } catch (error) {
-        res.status(404).send(error.message)
-    }
-})
-
-route.delete('/:id', (req, res) => {
-    try {
-        const { id } = req.params;
-        const data = deleteUserById(id);
-        res.status(200).send(data);
-    } catch (error) {
-        res.status(404).send(error.message)
-    }
-
-})
-
-module.exports = { route };
+module.exports = { Controller };

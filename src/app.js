@@ -1,10 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const {route} = require('./controller/user.controller')
+const {Controller} = require('./controller/user.controller')
 const app = express();
 
 app.use(bodyParser.json());
-app.use('/user', route);
+const controller = new Controller();
+app.use('/user', controller.route);
 app.use((error, req, res, next) => res.send(error.message));
 
 module.exports = { app };
